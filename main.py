@@ -25,7 +25,7 @@ P = 1
 ctl = MPC(model=quad,
           dynamics=quad.discrete_time_dynamics,
           Q=Q, R=R, P=P,
-          horizon=0.5,
+          horizon=5,
           #   ulb=-10, uub=10,
           #   xlb=[],
           #   xub=[np.pi / 4, np.pi / 2],
@@ -38,7 +38,7 @@ ctl = MPC(model=quad,
 
 def dummy_ctrl(x, u0=None):
     # return np.zeros([4, 1])
-    return np.array([[0.1, 0, 0, 0]]).T
+    return np.array([[0.1, -0.000, 0.001, 0.000]]).T
 
 
 sim_env = EmbeddedSimEnvironment(model=quad,

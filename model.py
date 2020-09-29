@@ -61,13 +61,13 @@ class Quadrotor(object):
         Ac[4, 6] = -g
         # 6:th row = Empty
         # 7:th row
-        Ac[6, 6] = w_z
+        Ac[6, 7] = w_z
         Ac[6, 9] = 1
         # 8:th row
-        Ac[7, 7] = -w_z
+        Ac[7, 6] = -w_z
         Ac[7, 10] = 1
         # 9:th row
-        Ac[8, 8] = w_y
+        Ac[8, 6] = w_y
         Ac[8, 11] = 1
         # 10:th row
         Ac[9, 10] = (-w_z * M_z + w_z * M_y) / M_x
@@ -240,7 +240,7 @@ class Quadrotor(object):
         R3[1, 0] = ca.sin(psi)
         R3[1, 1] = ca.cos(psi)
 
-        return R1@R2@R3
+        return R3@R2@R1
 
         # R1 = ca.DM([[1, 0, 0],
         #             [0, ca.cos(theta), -ca.sin(theta)],
@@ -267,12 +267,12 @@ class Quadrotor(object):
         T[0, 0] = 1
         T[1, 0] = 0
         T[2, 0] = 0
-        T[0, 1] = ca.sin(phi) * ca.tan(theta)
-        T[1, 1] = ca.cos(phi)
-        T[2, 1] = ca.sin(phi) / ca.cos(theta)
-        T[0, 2] = ca.cos(phi) * ca.tan(theta)
-        T[1, 2] = -ca.sin(phi)
-        T[2, 2] = ca.cos(phi) / ca.cos(theta)
+        T[0, 1] = ca.sin(theta) * ca.tan(phi)
+        T[1, 1] = ca.cos(theta)
+        T[2, 1] = ca.sin(theta) / ca.cos(phi)
+        T[0, 2] = ca.cos(theta) * ca.tan(phi)
+        T[1, 2] = -ca.sin(theta)
+        T[2, 2] = ca.cos(theta) / ca.cos(phi)
 
         return T
 
