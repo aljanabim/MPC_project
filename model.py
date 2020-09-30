@@ -218,6 +218,7 @@ class Quadrotor(object):
 
         # else:
         #     print("MAKE UP YOUR MIND!!!! I AM OUT")
+        print(x0.shape)
         return self.Ad(self.x_eq, self.u_eq) @ x0 + \
             self.Bd(self.x_eq, self.u_eq) @ u
 

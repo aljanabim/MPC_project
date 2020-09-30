@@ -63,7 +63,6 @@ ctl = MPC(model=quad,
           terminal_constraint=True,
           terminal_constraint_lb=0,
           terminal_constraint_ub=0)
-
 # Part NON LINEAR DYNAMICS TESTED
 
 
@@ -79,7 +78,7 @@ sim_env = EmbeddedSimEnvironment(model=quad,
                                  time=5)
 ctl.set_reference([
     0.5,  # x
-    0.5,  # y
+    0.4,  # y
     0.5,  # z
     0,  # vx
     0,  # vy

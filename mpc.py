@@ -47,8 +47,7 @@ class MPC(object):
 
         build_solver_time = -time.time()
         self.dt = model.dt
-        # self.Nx, self.Nu = len(model.x_eq), len(model.u_eq)
-        self.Nx, self.Nu = 24, len(model.u_eq)
+        self.Nx, self.Nu = len(model.x_eq), len(model.u_eq)
         Nopt = self.Nu + self.Nx
         self.Nt = int(horizon / self.dt)
         self.dynamics = dynamics
@@ -106,11 +105,9 @@ class MPC(object):
 
         # Generate MPC Problem
         for t in range(self.Nt):
-
             # Get variables
             x_t = opt_var['x', t]
             u_t = opt_var['u', t]
-
             # Dynamics constraint
             x_t_next = self.dynamics(x_t, u_t)
             con_eq.append(x_t_next - opt_var['x', t + 1])

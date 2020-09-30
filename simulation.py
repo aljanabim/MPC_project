@@ -48,8 +48,7 @@ class EmbeddedSimEnvironment(object):
 
         # Start figure
         if len(x0) == 12 or len(x0) == 24:
-            fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6),
-                  (ax7, ax8), (ax9, ax10), (ax11, ax12)) = plt.subplots(6, 2)
+            fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
         else:
             print("Check your state dimensions.")
             exit()
@@ -61,8 +60,6 @@ class EmbeddedSimEnvironment(object):
 
             # Get control input and obtain next state
             try:
-                print(x.shape)
-                quit()
                 u = self.controller(x, t[-1])
                 time.sleep(0.5)
                 x_next = self.dynamics(x, u)
@@ -88,50 +85,32 @@ class EmbeddedSimEnvironment(object):
                 ax1.clear()
                 ax2.clear()
                 ax3.clear()
-                ax4.clear()
-                ax5.clear()
-                ax6.clear()
-                ax7.clear()
-                ax8.clear()
-                ax9.clear()
-                ax10.clear()
-                ax11.clear()
-                ax12.clear()
 
-                ax1.set_title("Pendulum on Cart - Ref: " + " [m]")
-                # x
-                ax1.plot(t[l_wnd:-1], y_vec[0, l_wnd:-1])
-                ax1.set_ylabel("x")
+                ax1.plot(t[l_wnd:-1], y_vec[0, l_wnd:-1], label=r"$x$")
+                ax1.plot(t[l_wnd:-1], y_vec[1, l_wnd:-1], label=r"$y$")
+                ax1.plot(t[l_wnd:-1], y_vec[2, l_wnd:-1], label=r"$z$")
+                ax1.set_ylabel("Positions")
+                ax1.legend()
 
-                ax2.plot(t[l_wnd:-1], y_vec[3, l_wnd:-1])
-                ax2.set_ylabel(r"$v_x$")
-
-                # y
-                ax3.plot(t[l_wnd:-1], y_vec[1, l_wnd:-1])
-                ax3.set_ylabel("y")
-
-                ax4.plot(t[l_wnd:-1], y_vec[4, l_wnd:-1])
-                ax4.set_ylabel(r"$v_y$")
-
-                # z
-                ax5.plot(t[l_wnd:-1], y_vec[2, l_wnd:-1])
-                ax5.set_ylabel("z")
-
-                ax6.plot(t[l_wnd:-1], y_vec[5, l_wnd:-1])
-                ax6.set_ylabel(r"$v_z$")
-
-                # phi
-                ax7.plot(t[l_wnd:-1], y_vec[7, l_wnd:-1] * 180 / np.pi)
-                ax7.set_ylabel(r"$\phi$")
+                ax2.plot(t[l_wnd:-1], y_vec[3, l_wnd:-1]
+                         * 180 / np.pi, label=r"$\theta$")
+                ax2.plot(t[l_wnd:-1], y_vec[4, l_wnd:-1]
+                         * 180 / np.pi, label=r"$\phi$")
+                ax2.plot(t[l_wnd:-1], y_vec[5, l_wnd:-1]
+                         * 180 / np.pi, label=r"$\psi$")
+                ax2.set_ylabel(r"Angles [deg]")
+                ax2.legend()
 
                 # u
-                ax8.plot(t[l_wnd:-1], u_vec[0, l_wnd:-1], label='fz')
-                ax8.plot(t[l_wnd:-1], u_vec[1, l_wnd:-1], label=r'$\tau_1$')
-                ax8.plot(t[l_wnd:-1], u_vec[2, l_wnd:-1], label=r'$\tau_2$')
-                ax8.plot(t[l_wnd:-1], u_vec[3, l_wnd:-1], label=r'$\tau_3$')
-                ax8.legend()
-                ax8.set_xlabel("Time [s]")
-                ax8.set_ylabel("Control [u]")
+                ax3.plot(t[l_wnd:-1], u_vec[0, l_wnd:-1], label='fz')
+                ax3.plot(t[l_wnd:-1], u_vec[1, l_wnd:-1], label=r'$\tau_1$')
+                ax3.plot(t[l_wnd:-1], u_vec[2, l_wnd:-1], label=r'$\tau_2$')
+                ax3.plot(t[l_wnd:-1], u_vec[3, l_wnd:-1], label=r'$\tau_3$')
+                ax3.legend()
+                ax3.set_xlabel("Time [s]")
+                ax3.set_ylabel("Control [u]")
+
+                fig.suptitle(f'Quadrotor - reference tracking')
                 '''
 
                 The control will seem oscillatory but that is fine because we are calculateing
