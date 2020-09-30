@@ -47,7 +47,7 @@ class EmbeddedSimEnvironment(object):
         u_vec = np.zeros([4, 1])
 
         # Start figure
-        if len(x0) == 12 or len(x0) == 24:
+        if len(x0) == 12 or len(x0) > 12:
             fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
         else:
             print("Check your state dimensions.")
@@ -59,6 +59,7 @@ class EmbeddedSimEnvironment(object):
             x = np.array([y_vec[:, -1]]).T
 
             # Get control input and obtain next state
+
             try:
                 u = self.controller(x, t[-1])
                 time.sleep(0.5)
@@ -81,7 +82,7 @@ class EmbeddedSimEnvironment(object):
             else:
                 l_wnd = 0
 
-            if len(x0) == 12 or len(x0) == 24:
+            if len(x0) == 12 or len(x0) > 12:
                 ax1.clear()
                 ax2.clear()
                 ax3.clear()

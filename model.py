@@ -27,14 +27,12 @@ class Quadrotor(object):
         self.x_eq = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.u_eq = [0, 0, 0, 0]
 
-        self.set_integrators()
-        self.set_discrete_time_system()
-        self.set_discrete_time_aug_system()
-
     def model_lin(self, x, u):
         """
         Linearized dynamics of the quadrotor
         """
+        if x.shape[0] == 15:
+            x = x[:12]
         M_x = self.M[0, 0]
         M_y = self.M[1, 1]
         M_z = self.M[2, 2]
@@ -111,25 +109,49 @@ class Quadrotor(object):
         alpha_dot = self.T(alpha) @ omega
         omega_dot = ca.pinv(self.M) @(
             tau - ca.cross(omega, self.M@omega))
+        if x.shape[0] == 15:
+            if self.x_d is None:
+                print("What are you doing with your life? SET A REFERENCE! Asshole")
+                quit()
+            rx = self.x_d[0] - x[0]
+            ry = self.x_d[1] - x[1]
+            rz = self.x_d[2] - x[2]
 
-        dxdt = [p_dot[0],
-                p_dot[1],
-                p_dot[2],
-                v_dot[0],
-                v_dot[1],
-                v_dot[2],
-                alpha_dot[0],
-                alpha_dot[1],
-                alpha_dot[2],
-                omega_dot[0],
-                omega_dot[1],
-                omega_dot[2]]
+            dxdt = [p_dot[0],
+                    p_dot[1],
+                    p_dot[2],
+                    v_dot[0],
+                    v_dot[1],
+                    v_dot[2],
+                    alpha_dot[0],
+                    alpha_dot[1],
+                    alpha_dot[2],
+                    omega_dot[0],
+                    omega_dot[1],
+                    omega_dot[2],
+                    rx,
+                    ry,
+                    rz]
+        else:
+            dxdt = [p_dot[0],
+                    p_dot[1],
+                    p_dot[2],
+                    v_dot[0],
+                    v_dot[1],
+                    v_dot[2],
+                    alpha_dot[0],
+                    alpha_dot[1],
+                    alpha_dot[2],
+                    omega_dot[0],
+                    omega_dot[1],
+                    omega_dot[2]]
 
         return ca.vertcat(*dxdt)
 
     def set_integrators(self):
         # SET CASADI VARIABLES
-        x = ca.MX.sym('x', len(self.x_eq))
+        # LOOOOoooooooOOOOOOOONNNNGG COMMNMMMENNTN ;AJHSKL;DJDV;KLASJD;KFLAJ
+        x = ca.MX.sym('x', 12)  # len(self.x_eq))
         u = ca.MX.sym('u', len(self.u_eq))
 
         # INTEGRATION METHOD SETTINGS
@@ -141,6 +163,7 @@ class Quadrotor(object):
         self.integrator_lin = ca.integrator(
             'integrator', 'cvodes', dae, options)
 
+        x = ca.MX.sym('x', 15)  # len(self.x_eq))
         # CREATE INTEGRATOR FOR THE NONLINEAR DYNAMICS
         dae = {'x': x, 'ode': self.model_nonlin(x, u), 'p': ca.vertcat(u)}
         self.integrator_nonlin = ca.integrator(
@@ -165,22 +188,25 @@ class Quadrotor(object):
             self.integrator_lin(x0=x, p=u)['xf'], u)])
 
     def set_discrete_time_aug_system(self):
-        print(len(self.x_eq), len(self.u_eq))
         Ad_eq = self.Ad(self.x_eq, self.u_eq)
         Bd_eq = self.Bd(self.x_eq, self.u_eq)
+        Cd_eq = ca.DM.zeros(3, 12)
 
-        C = ca.MX.eye(12)
+        Cd_eq[0, 0] = 1
+        Cd_eq[1, 1] = 1
+        Cd_eq[2, 2] = 1
 
-        self.Ai = ca.MX.zeros(24, 24)
+        self.Ai = ca.DM.zeros(15, 15)
         self.Ai[0:12, 0:12] = Ad_eq
-        self.Ai[12:, 0:12] = -self.dt * C
-        self.Ai[12:, 12:] = ca.MX.eye(12)
+        self.Ai[12:, 0:12] = -self.dt * Cd_eq
+        self.Ai[12:, 12:] = ca.DM.eye(3)
 
-        self.Bi = ca.MX.zeros(24, 4)
+        self.Bi = ca.DM.zeros(15, 4)
         self.Bi[:12, :] = Bd_eq
 
-        self.Br = ca.MX.zeros(24, 12)
-        self.Br[12:, :] = self.dt * ca.MX.eye(12)
+        self.Br = ca.DM.zeros(15, 3)
+        self.Br[:12, :] = 0
+        self.Br[12:, :] = self.dt * ca.DM.eye(3)
 
     def discrete_time_aug_dynamics(self, x0, u):
         # print(self.Ai.shape, x0.shape, self.Bi.shape,
@@ -218,16 +244,23 @@ class Quadrotor(object):
 
         # else:
         #     print("MAKE UP YOUR MIND!!!! I AM OUT")
-        print(x0.shape)
+        if x0.shape[0] == 15:
+            x0 = x0[:12]
         return self.Ad(self.x_eq, self.u_eq) @ x0 + \
             self.Bd(self.x_eq, self.u_eq) @ u
+
+    def discrete_time_aug_dynamics(self, x0, u):
+        if self.x_d is None:
+            print("You stupid! Set a REFERENCE!")
+            quit()
+
+        return self.Ai @ x0 + self.Bi @ u + self.Br @ self.x_d
 
     def discrete_time_nl_dynamics(self, x0, u):
         alpha = x0[6:9]
         if type(alpha[0]) == type(np.array([])):
             gravity_compensator = (self.R_num(alpha)@(self.g * self.m))[-1]
             u[0] = u[0] - gravity_compensator
-        # u[0] = u[0] - ca.DM(self.g[-1] * self.m)
         out = self.integrator_nonlin(x0=x0, p=u)
         return out["xf"]
 
@@ -239,6 +272,9 @@ class Quadrotor(object):
         :type ref: float or casadi.DM 1x1
         """
         self.x_d = ref
+        self.set_integrators()
+        self.set_discrete_time_system()
+        self.set_discrete_time_aug_system()
 
     def set_equilibrium_point(self, x_eq, u_eq):
         """
@@ -252,9 +288,6 @@ class Quadrotor(object):
 
         self.x_eq = x_eq
         self.u_eq = u_eq
-
-        self.set_integrators()
-        self.set_discrete_time_system()
 
     @staticmethod
     def R(alpha=[0, 0, 0]):

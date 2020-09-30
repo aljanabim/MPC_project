@@ -22,7 +22,7 @@ class MPC(object):
                  horizon=10, Q=None, P=None, R=None,
                  ulb=None, uub=None, xlb=None, xub=None, terminal_constraint=False,
                  terminal_constraint_lb=None, terminal_constraint_ub=None,
-                 solver_opts=None
+                 solver_opts=None, aug=False, disturb_thrust=None
                  ):
         """ Initialize and build the MPC solver
         # Arguments:
@@ -46,8 +46,12 @@ class MPC(object):
         """
 
         build_solver_time = -time.time()
+        self.disturb_thrust = disturb_thrust
         self.dt = model.dt
-        self.Nx, self.Nu = len(model.x_eq), len(model.u_eq)
+        if aug:
+            self.Nx, self.Nu = 15, len(model.u_eq)
+        else:
+            self.Nx, self.Nu = len(model.x_eq), len(model.u_eq)
         Nopt = self.Nu + self.Nx
         self.Nt = int(horizon / self.dt)
         self.dynamics = dynamics
@@ -133,6 +137,7 @@ class MPC(object):
                 con_ineq_lb.append(xlb)
 
             # Objective Function / Cost Function
+            # print(self.Q.shape, x_t.shape, x0_ref.shape, u_t.shape, self.R.shape)
             obj += self.running_cost((x_t - x0_ref), self.Q, u_t, self.R)
 
         # Terminal Cost
@@ -227,7 +232,6 @@ class MPC(object):
 
         # Initialize variables
         self.optvar_x0 = np.full((1, self.Nx), x0.T)
-
         # Initial guess of the warm start variables
         self.optvar_init = self.opt_var(0)
         self.optvar_init['x', 0] = self.optvar_x0[0]
@@ -261,6 +265,8 @@ class MPC(object):
         # print("Predicted X: ", x_pred)
         # print("Predicted U: ", u_pred)
         # exit()
+        if self.disturb_thrust is not None:
+            u_pred[0][0] = u_pred[0][0] - self.disturb_thrust
 
         return u_pred[0]
 
