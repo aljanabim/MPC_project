@@ -1,6 +1,6 @@
 import numpy as np
 import scipy
-
+import casadi as ca
 from model import Quadrotor
 from mpc import MPC
 from simulation import EmbeddedSimEnvironment
@@ -86,6 +86,9 @@ def dummy_ctrl(x, u0=None):
 
 
 quad.m = 2  # ASTRID PLAY WITH THIS (THE MASS)
+quad.M = ca.DM([[0.001, 0.004, 0],
+                [0.004, 0.001, 0],
+                [0, 0, 0.005]])  # ASTRID PLAY WITH THIS TOO (THE INERTIA MATRIX)
 sim_env = EmbeddedSimEnvironment(model=quad,
                                  dynamics=quad.discrete_time_nl_dynamics,
                                  controller=ctl.mpc_controller,
